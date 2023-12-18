@@ -1,65 +1,8 @@
-use std::path::{Path, PathBuf};
+mod comic_directory;
+mod helper;
 
-enum FileType {
-    Directory,
-    ZipFile,
-    Other,
-}
-
-struct ComicDirectory {
-    directories: Vec<PathBuf>,
-    zip_files: Vec<PathBuf>,
-    unexpect_files: Vec<PathBuf>,
-}
-
-impl ComicDirectory {
-    fn new() -> Self {
-        Self {
-            directories: vec![],
-            zip_files: vec![],
-            unexpect_files: vec![],
-        }
-    }
-
-    fn add_one_directory(&mut self, path: PathBuf) {
-        self.directories.push(path);
-    }
-
-    fn add_one_zip_file(&mut self, path: PathBuf) {
-        self.zip_files.push(path);
-    }
-
-    fn add_one_unexpect_files(&mut self, path: PathBuf) {
-        self.unexpect_files.push(path);
-    }
-
-    fn show_directories(&self) {
-        println!("");
-        for dir_path in &self.directories {
-            let path = dir_path.to_str().expect("取得 path str 失敗");
-            println!("{}", path);
-        }
-        println!("");
-    }
-
-    fn show_zip_files(&self) {
-        println!("");
-        for dir_path in &self.zip_files {
-            let path = dir_path.to_str().expect("取得 path str 失敗");
-            println!("{}", path);
-        }
-        println!("");
-    }
-
-    fn show_unexpect_files(&self) {
-        println!("");
-        for dir_path in &self.unexpect_files {
-            let path = dir_path.to_str().expect("取得 path str 失敗");
-            println!("{}", path);
-        }
-        println!("");
-    }
-}
+use comic_directory::{ComicDirectory, FileType};
+use helper::get_file_type;
 
 fn main() {
     // 取得 comic 資料夾(level 0)屬於資料夾(level 1)的路徑
@@ -90,23 +33,5 @@ fn main() {
         comic_directory.show_unexpect_files();
     } else {
         println!("無法讀取目錄");
-    }
-}
-
-fn get_file_type(path: &Path) -> FileType {
-    if path.is_dir() {
-        FileType::Directory
-    } else if let Some(extension) = path.extension() {
-        if let Some(ext_str) = extension.to_str() {
-            if ext_str.to_lowercase() == "zip" {
-                FileType::ZipFile
-            } else {
-                FileType::Other
-            }
-        } else {
-            FileType::Other
-        }
-    } else {
-        FileType::Other
     }
 }
