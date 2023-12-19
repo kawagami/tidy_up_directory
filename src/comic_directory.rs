@@ -58,7 +58,7 @@ impl ComicDirectory {
         println!("");
     }
 
-    pub fn show_zip_files(&self) {
+    pub fn _show_zip_files(&self) {
         println!("");
         for dir_path in &self.zip_files {
             let path = dir_path.to_str().expect("取得 path str 失敗");

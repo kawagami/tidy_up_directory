@@ -14,8 +14,6 @@ fn main() {
 
     let comic_directory = ComicDirectory::new(path);
 
-    // 要壓縮的資料夾
+    // level 1 的資料夾
     comic_directory.show_directories();
-    // 要 rename 的檔案
-    comic_directory.show_zip_files();
 }
