@@ -1,8 +1,7 @@
 mod comic_directory;
 mod helper;
 
-use comic_directory::{ComicDirectory, FileType};
-use helper::get_file_type;
+use comic_directory::ComicDirectory;
 
 fn main() {
     // 取得 comic 資料夾(level 0)屬於資料夾(level 1)的路徑
@@ -13,25 +12,10 @@ fn main() {
 
     let path = "C:/for_test"; // 指定要查看的路径
 
-    if let Ok(entries) = std::fs::read_dir(path) {
-        let mut comic_directory = ComicDirectory::new();
+    let comic_directory = ComicDirectory::new(path);
 
-        for entry in entries {
-            if let Ok(entry) = entry {
-                match get_file_type(entry.path().as_path()) {
-                    FileType::Directory => comic_directory.add_one_directory(entry.path()),
-                    FileType::ZipFile => comic_directory.add_one_zip_file(entry.path()),
-                    FileType::Other => comic_directory.add_one_unexpect_files(entry.path()),
-                }
-            }
-        }
-
-        comic_directory.show_directories();
-
-        comic_directory.show_zip_files();
-
-        comic_directory.show_unexpect_files();
-    } else {
-        println!("無法讀取目錄");
-    }
+    // 要壓縮的資料夾
+    comic_directory.show_directories();
+    // 要 rename 的檔案
+    comic_directory.show_zip_files();
 }
