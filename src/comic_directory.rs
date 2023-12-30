@@ -1,6 +1,9 @@
+use rayon::prelude::*;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::helper::get_file_type;
+use crate::zip_fn::doit;
 
 pub enum FileType {
     Directory,
@@ -15,6 +18,8 @@ pub struct ComicDirectory {
     zip_files: Vec<PathBuf>,
     // 預計之外的事物
     unexpect_files: Vec<PathBuf>,
+    // 現有的 zip files
+    existed_zip_files: HashMap<String, String>,
 }
 
 enum InnerType {
@@ -29,6 +34,7 @@ impl ComicDirectory {
             directories: vec![],
             zip_files: vec![],
             unexpect_files: vec![],
+            existed_zip_files: HashMap::new(),
         };
 
         let entries = std::fs::read_dir(path).expect("read dir fail");
@@ -51,7 +57,14 @@ impl ComicDirectory {
     }
 
     pub fn add_one_zip_file(&mut self, path: PathBuf) {
-        self.zip_files.push(path);
+        self.zip_files.push(path.clone());
+
+        if let Some(file_name) = path.file_name() {
+            if let Some(str) = file_name.to_str() {
+                self.existed_zip_files
+                    .insert(str.to_string(), "".to_string());
+            }
+        }
     }
 
     pub fn add_one_unexpect_files(&mut self, path: PathBuf) {
@@ -86,23 +99,65 @@ impl ComicDirectory {
     }
 
     pub fn classify(self) {
-        self.directories.iter().for_each(|directory_path| {
+        self.directories.par_iter().for_each(|directory_path| {
             match count_files_in_folder(directory_path) {
                 InnerType::Pics => {
-                    if let Some(file_name) = directory_path.file_name() {
-                        if let Some(file_name_str) = file_name.to_str() {
-                            println!("{}\nis\n{}\n", file_name_str, "Pics status");
-                        }
-                    }
+                    self.handle_pics(directory_path);
                 }
                 InnerType::ZipFile => {
-                    println!("{:?}\nis\n{}\n", directory_path.to_str(), "ZipFile status")
+                    handle_zip_file(directory_path);
                 }
                 InnerType::Errors => {
                     println!("{:?}\nis\n{}\n", directory_path.to_str(), "Errors status")
                 }
             }
         });
+    }
+
+    /**
+     *
+     */
+    pub fn handle_pics(&self, path: &PathBuf) {
+        if let Some(file_name) = path.file_name() {
+            if let Some(file_name_str) = file_name.to_str() {
+                // 取得壓縮檔應該取的名稱
+                let zip_name = format!("{}.zip", file_name_str);
+                // 檢查是否在現有的 zip files 中存在
+                if self.existed_zip_files.contains_key(&zip_name) {
+                    println!("{} 壓縮檔案已經存在", file_name_str);
+                } else {
+                    // 執行壓縮
+                    if let Some(path_str) = path.as_path().to_str() {
+                        // 要壓縮的資料夾路徑 &str
+                        let src_dir = path_str;
+                        // 壓縮出來的檔案路徑
+                        let dst_file = format!("{}.zip", path_str);
+
+                        // println!("要壓縮的資料夾 {}", src_dir);
+
+                        // doit(src_dir, &dst_file, zip::CompressionMethod::Stored).expect("壓縮失敗");
+                        match doit(src_dir, &dst_file, zip::CompressionMethod::Stored) {
+                            Ok(()) => {
+                                // 壓縮成功後刪除資料夾
+                                match std::fs::remove_dir_all(path_str) {
+                                    Ok(()) => println!("{path_str} deleted successfully"),
+                                    Err(err) => println!("Error deleting directory: {}", err),
+                                }
+                            }
+                            Err(error) => {
+                                println!("壓縮失敗\nError: {}", error);
+                            }
+                        }
+                    } else {
+                        println!("path.as_path().to_str() fail")
+                    }
+                }
+            } else {
+                println!("file_name.to_str() fail")
+            }
+        } else {
+            println!("path.file_name() fail")
+        }
     }
 }
 
@@ -125,4 +180,9 @@ fn count_files_in_folder(path: &PathBuf) -> InnerType {
     } else {
         InnerType::Errors
     }
+}
+
+fn handle_zip_file(path: &PathBuf) {
+    println!("{:?}\nis\n{}\n", path.to_str(), "ZipFile status")
+    // 取得 level 1 的名稱 A，將 level 2 重新命名為 A，將重新命名後的 level 2 往上移動檔案到 level 1 同層級，刪除空的 level 1 資料夾
 }
