@@ -15,5 +15,9 @@ fn main() {
     let comic_directory = ComicDirectory::new(path);
 
     // level 1 的資料夾
-    comic_directory.show_directories();
+    // comic_directory._show_directories();
+
+
+    comic_directory.classify();
+
 }

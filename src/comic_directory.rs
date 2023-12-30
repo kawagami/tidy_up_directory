@@ -9,9 +9,18 @@ pub enum FileType {
 }
 
 pub struct ComicDirectory {
+    // 未整理的資料夾
     directories: Vec<PathBuf>,
+    // 壓縮過的檔案
     zip_files: Vec<PathBuf>,
+    // 預計之外的事物
     unexpect_files: Vec<PathBuf>,
+}
+
+enum InnerType {
+    ZipFile,
+    Pics,
+    Errors,
 }
 
 impl ComicDirectory {
@@ -49,7 +58,7 @@ impl ComicDirectory {
         self.unexpect_files.push(path);
     }
 
-    pub fn show_directories(&self) {
+    pub fn _show_directories(&self) {
         println!("");
         for dir_path in &self.directories {
             let path = dir_path.to_str().expect("取得 path str 失敗");
@@ -74,5 +83,48 @@ impl ComicDirectory {
             println!("{}", path);
         }
         println!("");
+    }
+
+    pub fn classify(self) {
+        for directory_path in self.directories {
+            match count_files_in_folder(&directory_path) {
+                InnerType::Pics => {
+                    // 取得 level 1 的名稱 A，將所有圖片壓縮成同 A 的壓縮檔 B，將 B 往上移動檔案到 level 1 同層級，刪除空的 level 1 資料夾
+                    if let Some(file_name) = directory_path.file_name() {
+                        if let Some(file_name_str) = file_name.to_str() {
+                            println!("{}\nis\n{}\n", file_name_str, "Pics status");
+                        }
+                    }
+                }
+                InnerType::ZipFile => {
+                    //
+                    println!("{:?}\nis\n{}\n", &directory_path.to_str(), "ZipFile status")
+                }
+                InnerType::Errors => {
+                    println!("{:?}\nis\n{}\n", &directory_path.to_str(), "Errors status")
+                }
+            }
+        }
+    }
+}
+
+fn count_files_in_folder(path: &PathBuf) -> InnerType {
+    let mut file_count = 0;
+
+    let entries = std::fs::read_dir(path).expect("read dir fail");
+    for entry in entries {
+        let entry = entry.expect("count_files_in_folder fail");
+        let metadata = entry.metadata().expect("count_files_in_folder fail");
+        if metadata.is_file() {
+            file_count += 1;
+        }
+    }
+
+    if file_count > 1 {
+        InnerType::Pics
+    } else if file_count == 1 {
+        InnerType::ZipFile
+    } else {
+        InnerType::Errors
     }
 }
