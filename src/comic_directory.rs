@@ -105,7 +105,7 @@ impl ComicDirectory {
                     self.handle_pics(directory_path);
                 }
                 InnerType::ZipFile => {
-                    handle_zip_file(directory_path);
+                    self.handle_zip_file(directory_path);
                 }
                 InnerType::Errors => {
                     println!("{:?}\nis\n{}\n", directory_path.to_str(), "Errors status")
@@ -159,6 +159,66 @@ impl ComicDirectory {
             println!("path.file_name() fail")
         }
     }
+
+    /**
+     *
+     */
+    fn handle_zip_file(&self, path: &PathBuf) {
+        // 取得 level 1 的名稱 A，將 level 2 重新命名為 A，將重新命名後的 level 2 往上移動檔案到 level 1 同層級，刪除空的 level 1 資料夾
+        if let Some(file_name) = path.file_name() {
+            if let Some(file_name_str) = file_name.to_str() {
+                // 取得壓縮檔應該取的名稱
+                let zip_name = format!("{}.zip", file_name_str);
+                // 檢查是否在現有的 zip files 中存在
+                if self.existed_zip_files.contains_key(&zip_name) {
+                    println!("{} 壓縮檔案已經存在", file_name_str);
+                } else {
+                    // 執行 rename
+                    if let Some(path_str) = path.as_path().to_str() {
+                        // 要壓縮的資料夾路徑 &str
+                        // let src_dir = path_str;
+                        // 壓縮出來的檔案路徑
+                        let dst_file = format!("{}.zip", path_str);
+
+                        // println!("src_dir => {}\ndst_file => {}\n", src_dir, dst_file);
+
+                        if let Ok(mut entries) = std::fs::read_dir(path) {
+                            if let Some(entry) = entries.next() {
+                                if let Ok(entry) = entry {
+                                    let inner_zip_file = entry.path();
+                                    // println!("File path: {:?}", inner_zip_file);
+                                    match std::fs::rename(inner_zip_file, dst_file) {
+                                        Ok(()) => {
+                                            // rename 成功後刪除資料夾
+                                            match std::fs::remove_dir(path_str) {
+                                                Ok(()) => {
+                                                    println!("{path_str} deleted successfully")
+                                                }
+                                                Err(err) => {
+                                                    println!("Error deleting directory: {}", err)
+                                                }
+                                            }
+                                        }
+                                        Err(error) => {
+                                            println!("rename 失敗\nError: {}", error);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            println!("Error reading directory");
+                        }
+                    } else {
+                        println!("path.as_path().to_str() fail")
+                    }
+                }
+            } else {
+                println!("file_name.to_str() fail")
+            }
+        } else {
+            println!("path.file_name() fail")
+        }
+    }
 }
 
 fn count_files_in_folder(path: &PathBuf) -> InnerType {
@@ -180,9 +240,4 @@ fn count_files_in_folder(path: &PathBuf) -> InnerType {
     } else {
         InnerType::Errors
     }
-}
-
-fn handle_zip_file(path: &PathBuf) {
-    println!("{:?}\nis\n{}\n", path.to_str(), "ZipFile status")
-    // 取得 level 1 的名稱 A，將 level 2 重新命名為 A，將重新命名後的 level 2 往上移動檔案到 level 1 同層級，刪除空的 level 1 資料夾
 }

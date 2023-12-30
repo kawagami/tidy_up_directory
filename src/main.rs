@@ -15,8 +15,8 @@ fn main() {
     // 狀況 2 : 取得 level 1 的名稱 A，將 level 2 重新命名為 A，將重新命名後的 level 2 往上移動檔案到 level 1 同層級，刪除空的 level 1 資料夾
     // 狀況 3 : 跳出這次處理
 
-    let path = "C:\\for_test"; // 指定要查看的路径
-    // let path = "D:\\temp"; // 指定要查看的路径
+    // let path = "C:\\for_test"; // 指定要查看的路径
+    let path = "D:\\temp"; // 指定要查看的路径
 
     let comic_directory = ComicDirectory::new(path);
 
