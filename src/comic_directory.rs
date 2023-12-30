@@ -86,10 +86,9 @@ impl ComicDirectory {
     }
 
     pub fn classify(self) {
-        for directory_path in self.directories {
-            match count_files_in_folder(&directory_path) {
+        self.directories.iter().for_each(|directory_path| {
+            match count_files_in_folder(directory_path) {
                 InnerType::Pics => {
-                    // 取得 level 1 的名稱 A，將所有圖片壓縮成同 A 的壓縮檔 B，將 B 往上移動檔案到 level 1 同層級，刪除空的 level 1 資料夾
                     if let Some(file_name) = directory_path.file_name() {
                         if let Some(file_name_str) = file_name.to_str() {
                             println!("{}\nis\n{}\n", file_name_str, "Pics status");
@@ -97,14 +96,13 @@ impl ComicDirectory {
                     }
                 }
                 InnerType::ZipFile => {
-                    //
-                    println!("{:?}\nis\n{}\n", &directory_path.to_str(), "ZipFile status")
+                    println!("{:?}\nis\n{}\n", directory_path.to_str(), "ZipFile status")
                 }
                 InnerType::Errors => {
-                    println!("{:?}\nis\n{}\n", &directory_path.to_str(), "Errors status")
+                    println!("{:?}\nis\n{}\n", directory_path.to_str(), "Errors status")
                 }
             }
-        }
+        });
     }
 }
 
